@@ -1,0 +1,465 @@
+
+B1: tạo Splash Screen
+================SplashScreen.java================
+   Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+               startActivity(new Intent(SplashActivity.this, MainActivity.class));
+               finish();
+            }
+        }, 2000);
+//có thể dùng new Handler
+=================================================
+
+B2: tạo tablayout + viewpager2
+
+-> khởi tạo tablayout và viewpager2 trong main_activity.xml
+-> tạo fragment
+-> tạo HomePagerAdapter extends FragmentStateAdapter
+-> tạo hàm initView trong MainActity
+
+====================main_activity.xml=========================
+
+ <com.google.android.material.tabs.TabLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tab_layout" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/view_pager2" />
+
+====================HomePagerAdapter.java=====================
+
+  public HomePagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+        super(fragmentActivity);
+    }
+
+    @Override
+    public int getItemCount() {
+        return 2;
+    }
+
+    @NonNull
+    @Override
+    public Fragment createFragment(int position) {
+        switch (position) {
+            case 0:
+                return new DanhSachFragment();
+            case 1:
+                return new SuaFragment();
+            default:
+                return new DanhSachFragment();
+        }
+    }
+
+=======================MainActivity.java=========================
+  private void initView() {
+        tabLayout = findViewById(R.id.tab_layout);
+        viewPager2 = findViewById(R.id.view_pager2);
+
+        HomePagerAdapter homePagerAdapter = new HomePagerAdapter(this);
+        viewPager2.setAdapter(homePagerAdapter);
+
+        new TabLayoutMediator(tabLayout, viewPager2, (tab, position) -> {
+            switch (position) {
+                case 0:
+                    tab.setText("Danh sách");
+                    break;
+                case 1:
+                    tab.setText("Sửa");
+                    break;
+            }
+        }).attach();
+    }
+
+============================================================================
+
+B3: Tạo Database
+-> tạo Model theo đề
+-> Tạo file DbHelper extends SQLiteOpenHelper
+
+==========================DbHelper.java=====================================
+
+    Context context;
+
+    public DbHelper(@Nullable Context context) {
+        super(context, "student.db", null, 1);
+        this.context = context;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase sqLiteDatabase) {
+
+        String tableStudent = "CREATE TABLE student (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, age INTEGER, mssv TEXT)";
+        sqLiteDatabase.execSQL(tableStudent);
+
+        //database mẫu
+        String addStudent = "INSERT INTO student VALUES " +
+                "(1, 'Dang', 18, 'PH36461')," +
+                "(2, 'Huy', 18, 'PH36462')," +
+                "(3, 'Minh', 18, 'PH36463')," +
+                "(4, 'Nam', 18, 'PH36464')," +
+                "(5, 'Long', 18, 'PH36465')";
+
+        sqLiteDatabase.execSQL(addStudent);
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
+        if (i < i1) {
+            sqLiteDatabase.execSQL("DROP TABLE IF EXISTS student");
+            onCreate(sqLiteDatabase);
+        }
+    }
+}
+
+===============================================================================================================
+
+B4: tạo giao diện hiện thị lên fragment
+
+-> trong fragment_danhsach.xml tạo RecyclerView và Floating Button //tự tạo
+-> trong folder layout tạo file item_student.xml là giao diện custom RecyclerView //tự tạo
+-> thêm hàm getAllStudents vào DbHelper.java
+-> tạo file StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentViewHolder> 
+
+
+============================DbHelper.java=================================================
+//thêm hàm getAllStudents
+
+public List<Student> getAllStudent() {
+
+        List<Student> list = null;
+        SQLiteDatabase sqLiteDatabase = getReadableDatabase();
+        String sql = "SELECT * FROM student";
+        Cursor cursor = sqLiteDatabase.rawQuery(sql, null);
+        if (cursor != null) {
+            list = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                int id = cursor.getInt(0);
+                String name = cursor.getString(1);
+                int age = cursor.getInt(2);
+                String mssv = cursor.getString(3);
+                Student student = new Student(id, name, age, mssv);
+                list.add(student);
+            }
+            cursor.close();
+        }
+        return list;
+    }
+
+=================================StudentAdapter.java==================================================
+
+public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentViewHolder> {
+
+    List<Student> studentList;
+    DbHelper dbHelper;
+    Context context;
+
+    public StudentAdapter(List<Student> studentList, Context context) {
+        this.studentList = studentList;
+        dbHelper = new DbHelper(context);
+        this.context = context;
+    }
+
+    @NonNull
+    @Override
+    public StudentAdapter.StudentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Inflate the item layout
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_student, parent, false);
+        return new StudentViewHolder(itemView);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull StudentAdapter.StudentViewHolder holder, int position) {
+        Student studentPos = studentList.get(position);
+        // Bind student data to the views in the item layout
+        holder.idTextView.setText("ID: " + studentPos.getId());
+        holder.nameTextView.setText("Name: " + studentPos.getName());
+        holder.ageTextView.setText("Age: " + studentPos.getAge());
+        holder.mssvTextView.setText("MSSV: " + studentPos.getMssv());
+ 
+    }
+
+    @Override
+    public int getItemCount() {
+        return studentList.size();
+    }
+
+    public class StudentViewHolder extends RecyclerView.ViewHolder {
+        TextView idTextView, nameTextView, ageTextView, mssvTextView;
+        ImageView deleteImageView;
+
+        public StudentViewHolder(@NonNull View itemView) {
+            super(itemView);
+            // Initialize views in the item layout
+            idTextView = itemView.findViewById(R.id.txt_id);
+            nameTextView = itemView.findViewById(R.id.txt_name);
+            ageTextView = itemView.findViewById(R.id.txt_age);
+            mssvTextView = itemView.findViewById(R.id.txt_mssv);
+            deleteImageView = itemView.findViewById(R.id.img_delete);
+            // Bind data to the views
+        }
+    }
+}
+
+
+==========================================DanhSachFragment.java================================================================
+
+public class DanhSachFragment extends Fragment {
+
+
+    RecyclerView recyclerView;
+    FloatingActionButton fab;
+    DbHelper dbHelper;
+    List<Student> studentList;
+    StudentAdapter studentAdapter;
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_danh_sach, container, false);
+        recyclerView = view.findViewById(R.id.recyclerView);
+        fab = view.findViewById(R.id.fab);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setHasFixedSize(true);
+        dbHelper = new DbHelper(getContext());
+
+        studentList = dbHelper.getAllStudent();
+        studentAdapter = new StudentAdapter(studentList, getContext());
+        recyclerView.setAdapter(studentAdapter);
+
+        return view;
+    }
+}
+
+
+================================================================================================================================
+
+B5: xóa dữ liệu
+
+-> thêm hàm xóa dữ liệu vào DbHelper hoặc StudentDAO
+-> ở onBindViewHolder thêm hàm lấy sự kiện cho nút xóa 
+-> chú ý trong StudentModel thêm Model mới tùy theo việc có yêu cầu phần id autoincrement hay không
+
+
+========================================DbHelper.java========================================================================
+
+//thêm vào DbHelper
+
+   public void deleteStudent(int id) {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        long result = sqLiteDatabase.delete("student", "id = ?", new String[]{String.valueOf(id)});
+        if (result > 0) {
+            Toast.makeText(context, "Xoa thanh cong", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(context, "Xoa that bai", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
+========================================StudentAdapter.java=====================================================================
+//thêm vào phần onBindViewHolder
+
+  holder.deleteImageView.setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle("Xác nhận xóa");
+            builder.setIcon(R.drawable.ic_delete);
+            builder.setMessage("Bạn có chắc chắn muốn xóa " + studentPos.getName() + " khỏi danh sách?");
+            builder.setCancelable(false);
+
+            builder.setPositiveButton("Xóa", (dialog, which) -> {
+                // Delete the student
+                dbHelper.deleteStudent(studentPos.getId());
+                studentList.clear();
+                studentList.addAll(dbHelper.getAllStudent());
+                notifyDataSetChanged();
+                dialog.dismiss();
+            });
+            builder.setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss());
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        });
+ 
+
+==================================================================================================================================
+
+B6: thêm dữ liệu bằng floating button
+-> tạo layout dialog_add.xml //tự thêm thành phần
+-> thêm hàm thêm dữ liệu vào DbHelper hoặc StudentDAO
+-> add sự kiện vào floating button trong DanhSachFragment.java
+
+===================================================DbHelper.java====================================================================
+//thêm vào DbHelper
+
+    public void insertStudent(Student student) {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("name", student.getName());
+        values.put("age", student.getAge());
+        values.put("mssv", student.getMssv());
+
+        long result = sqLiteDatabase.insert("student", null, values);
+        if (result > 0) {
+            Toast.makeText(context, "Them thanh cong", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(context, "Them that bai", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+=====================================================DanhSachFragment.java====================================================
+//sau khi ánh xạ fab, ta gán sự kiện (chú ý custom phần validate)
+
+fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                LayoutInflater inflater = getLayoutInflater();
+                view = inflater.inflate(R.layout.dialog_add, null);
+                builder.setView(view);
+                AlertDialog dialog = builder.create();
+                dialog.setCancelable(false);
+                dialog.show();
+                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+
+
+                edName = view.findViewById(R.id.ed_name);
+                edAge = view.findViewById(R.id.ed_age);
+                edMssv = view.findViewById(R.id.ed_mssv);
+                btnAdd = view.findViewById(R.id.btn_add);
+                btnCancel = view.findViewById(R.id.btn_cancel);
+
+
+                btnAdd.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        String name = edName.getText().toString();
+                        String age = edAge.getText().toString();
+                        String mssv = edMssv.getText().toString();
+
+                        if (name.isEmpty() || age.isEmpty() || mssv.isEmpty()) {
+                            Toast.makeText(getContext(), "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (!age.matches("\\d+")) {
+                            Toast.makeText(getContext(), "Tuổi phải là số", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (Integer.parseInt(age) < 18) {
+                            Toast.makeText(getContext(), "Tuổi phải lớn hơn 18", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        Student student = new Student(name, Integer.parseInt(age), mssv);
+                        dbHelper.insertStudent(student);
+                        studentList.clear();
+                        studentList.addAll(dbHelper.getAllStudent());
+                        studentAdapter.notifyDataSetChanged();
+                        dialog.dismiss();
+                    }
+                });
+
+                btnCancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        dialog.dismiss();
+                    }
+                });
+            }
+
+        });
+
+======================================================================================================================================
+
+B7; sửa dữ liệu bằng tab sửa
+-> chỉnh sửa fragment_sua.xml theo yêu cầu
+-> tạo hàm updateStudent trong DbHelper hoặc StudentDAO
+-> ánh xạ các thành phần
+-> gán sự kiện và nút Sửa
+
+================================================DbHelper.java======================================================================
+// thêm hàm
+
+  public void updateStudent(Student student) {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("name", student.getName());
+        values.put("age", student.getAge());
+        values.put("mssv", student.getMssv());
+
+        long result = sqLiteDatabase.update("student", values, "id=?", new String[]{String.valueOf(student.getId())});
+        if (result > 0) {
+            Toast.makeText(context, "Update thanh cong", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(context, "Update that bai", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+================================================SuaFragment.java======================================================================
+//sự kiện cho nút Sửa
+
+ dbHelper = new DbHelper(getContext());
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String id = edId.getText().toString();
+                String name = edName.getText().toString();
+                String age = edAge.getText().toString();
+                String mssv = edMssv.getText().toString();
+
+                student = new Student(Integer.parseInt(id), name, Integer.parseInt(age), mssv);
+                dbHelper.updateStudent(student);
+
+                edId.setText("");
+                edName.setText("");
+                edAge.setText("");
+                edMssv.setText("");
+
+            }
+        });
+
+
+=========================================================================================================================================
+
+B8: Sync dữ liệu
+
+-> liên kết với Firebase, thêm các thư viện
+-> tạo nút vào thực hàm sau trong phần DanhSachFragment
+
+======================================================DanhSachFragment.java===============================================================
+// thêm vào DanhSachFragment
+
+   btnSync.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                studentList.clear();
+                studentList.addAll(dbHelper.getAllStudent());
+                studentAdapter.notifyDataSetChanged();
+
+                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                DatabaseReference myRef = database.getReference("students");
+                studentList = new DbHelper(getContext()).getAllStudent();
+
+                for (Student student : studentList) {
+                    myRef.child(String.valueOf(student.getId())).setValue(student).addOnSuccessListener(unused -> {
+                        Toast.makeText(getContext(), "Sync thanh cong", Toast.LENGTH_SHORT).show();
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Sync that bai", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }
+        });
+
+=================================================================================================================================================
+

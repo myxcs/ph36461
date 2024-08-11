@@ -1,0 +1,243 @@
+======= Cách tạo NavigationView Drawer cơ bản =======
+========================================================
+B1:
+->tạo empty project
+->trong phần activity_main.xml 
+ -đổi phần body thành DrawerLayout (androidx)
+ -tạo một LinearLayout
+ -một NavigationView
+ -đều ở định dạng match parent
+->check trong phần theme -> NoActionBar
+->thêm icon vào phần drawable
+->(opinion) thêm phần string
+->trong phần layout tạo header_nav
+->vào res -> new -> android resource directory -> "menu" -> menu_nav
+
+/// code các phần 
+
+*activity_main
+==============
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:theme="@style/ThemeOverlay.AppCompat.Light"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.Toolbar
+                android:layout_width="match_parent"
+                android:layout_height="?actionBarSize"   
+                android:theme="@style/ThemeOverlay.AppCompat.Light"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed"
+                app:titleTextColor="#ffffff"
+                android:background="#8BC34A"
+                android:id="@+id/toolbar"
+                />
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        app:headerLayout="@layout/header_nav"
+        app:menu="@menu/menu_nav"
+        android:id="@+id/navigation_view"
+        android:layout_gravity="start"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"/>
+
+
+</androidx.drawerlayout.widget.DrawerLayout>
+
+
+*header_nav
+=================
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_height="wrap_content"
+    android:padding="20dp"
+    android:background="#8BC34A">
+
+    <ImageView
+        android:layout_marginTop="25dp"
+        android:layout_width="200dp"
+        android:layout_height="100dp"
+        android:src="@drawable/fpt"
+        android:padding="10dp"
+        android:contentDescription="@string/app_name"
+        android:id="@+id/imageView"
+        />
+    <TextView
+        android:text="Nguyen Quang Thai"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_height="wrap_content"/>
+    <TextView
+        android:text="not.quangthai1806@gmail.com"
+        android:textSize="15dp"
+        android:textStyle="normal"
+        android:textColor="@color/white"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_height="wrap_content"/>
+</LinearLayout>
+
+*menu_nav
+===========
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:title="@string/nav_home"
+            android:icon="@drawable/ic_home"/>
+        <item
+            android:id="@+id/nav_bookmarks"
+            android:title="@string/nav_bookmarks"
+            android:icon="@drawable/ic_bookmarks"/>
+    </group>
+   <item android:title="@string/more">
+       <menu>
+           <item
+               android:id="@+id/nav_settings"
+               android:title="@string/nav_settings"
+               android:icon="@drawable/ic_settings"/>
+           <item
+               android:id="@+id/nav_exit"
+               android:title="@string/nav_exit"
+               android:icon="@drawable/ic_exit"/>
+       </menu>
+   </item>
+</menu>
+
+
+
+=======================================
+B2:
+->tạo fragment cần thiết
+->tạo giao diện cho fragment
+->code phần MainActivity
+
+
+*MainActivity
+============================
+package com.example.ar2_lab5_ver2;
+
+import android.os.Bundle;
+import android.view.MenuItem;
+
+import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
+import com.example.ar2_lab5_ver2.fragment.BookmarksFragment;
+import com.example.ar2_lab5_ver2.fragment.HomeFragment;
+import com.example.ar2_lab5_ver2.fragment.SettingsFragment;
+import com.google.android.material.navigation.NavigationView;
+
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+    public static final int FRAG_HOME = 0;
+    public static final int FRAG_BOOKMARKS = 1;
+    public static final int FRAG_SETTINGS = 2;
+
+    DrawerLayout drawerLayout;
+    Toolbar toolbar;
+
+    int currentFragment = FRAG_HOME;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+
+        drawerLayout = findViewById(R.id.drawer_layout);
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.nav_drawer_open, R.string.nav_drawer_close);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = findViewById(R.id.navigation_view);
+        navigationView.setNavigationItemSelectedListener(this);
+        replaceFragment(new HomeFragment());
+        navigationView.getMenu().findItem(R.id.nav_home).setChecked(true);
+
+    }
+
+    private void replaceFragment(Fragment fragment) {
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, fragment);
+        transaction.commit();
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
+        int id = item.getItemId();
+        if (id == R.id.nav_home) {
+            if (currentFragment != FRAG_HOME) {
+                replaceFragment(new HomeFragment());
+                toolbar.setTitle("Home");
+                currentFragment = FRAG_HOME;
+            }
+        } else if (id == R.id.nav_bookmarks) {
+            if (currentFragment != FRAG_BOOKMARKS) {
+                replaceFragment(new BookmarksFragment());
+                toolbar.setTitle("Bookmarks");
+                currentFragment = FRAG_BOOKMARKS;
+            }
+
+        } else if (id == R.id.nav_settings) {
+            if (currentFragment != FRAG_SETTINGS) {
+                replaceFragment(new SettingsFragment());
+                toolbar.setTitle("Settings");
+                currentFragment = FRAG_SETTINGS;
+            }
+        }
+        if (id == R.id.nav_exit) {
+            finish();
+        }
+            return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(drawerLayout.isDrawerOpen(GravityCompat.START)){
+            drawerLayout.closeDrawer(GravityCompat.START);
+        }
+        else {
+            super.onBackPressed();
+        }
+
+    }
+}
+

@@ -1,0 +1,122 @@
+======= Cách tạo Bottom Navigation cơ bản =======
+========================================================
+B1:
+->tạo empty project
+->trong phần activity_main.xml 
+ -tạo một BottomNavigation View
+ - định dạng match parent - wrap content
+->thêm icon vào phần drawable
+->vào res -> new -> android resource directory -> "menu" -> bottom_nav_menu
+
+/// code các phần 
+
+*activity_main
+===========================================
+   <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            app:itemIconTint="@color/color_nav_bottom"
+            app:itemTextColor="@color/color_nav_bottom"
+            android:background="#8BC34A"
+            app:menu="@menu/bottom_nav_menu" />
+
+==============================================
+
+*bottom_nav_menu
+==============================================
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+        <item
+            android:id="@+id/bottom_nav_home"
+            android:title="@string/nav_home"
+            android:icon="@drawable/ic_home"/>
+        <item
+            android:id="@+id/bottom_nav_bookmarks"
+            android:title="@string/nav_bookmarks"
+            android:icon="@drawable/ic_bookmarks"/>
+        <item
+            android:id="@+id/bottom_nav_settings"
+            android:title="@string/nav_settings"
+            android:icon="@drawable/ic_settings"/>
+
+
+</menu>
+================================================
+
+B2: 
+->tạo fragment cần thiết
+->tạo giao diện cho fragment
+->code phần MainActivity
+
+*MainActivity
+===========================================
+
+
+import android.os.Bundle;
+import android.view.MenuItem;
+
+import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
+import com.example.ar2_lab5_ver2.fragment.BookmarksFragment;
+import com.example.ar2_lab5_ver2.fragment.HomeFragment;
+import com.example.ar2_lab5_ver2.fragment.SettingsFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationView;
+
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+    public static final int FRAG_HOME = 0;
+    public static final int FRAG_BOOKMARKS = 1;
+    public static final int FRAG_SETTINGS = 2;
+
+    DrawerLayout drawerLayout;
+    Toolbar toolbar;
+    BottomNavigationView bottomNavigationView;
+
+    int currentFragment = FRAG_HOME;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+
+
+        //bottom navigation
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setSelectedItemId(R.id.bottom_nav_home);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+           int id = item.getItemId();
+           if (id == R.id.bottom_nav_home) {
+               if (currentFragment != FRAG_HOME) {
+                   replaceFragment(new HomeFragment());
+                   toolbar.setTitle("Home");
+                   currentFragment = FRAG_HOME;
+               }
+           } else if (id == R.id.bottom_nav_bookmarks) {
+               if (currentFragment != FRAG_BOOKMARKS) {
+                   replaceFragment(new BookmarksFragment());
+                   toolbar.setTitle("Bookmarks");
+                   currentFragment = FRAG_BOOKMARKS;
+               }
+           } else if (id == R.id.bottom_nav_settings) {
+               if (currentFragment != FRAG_SETTINGS) {
+                   replaceFragment(new SettingsFragment());
+                   toolbar.setTitle("Settings");
+                   currentFragment = FRAG_SETTINGS;
+               }
+           }
+            return true;
+        });
+
+    }
+}
