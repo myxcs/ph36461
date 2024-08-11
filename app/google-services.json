@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "680503152707",
+    "project_id": "thi-thu-1",
+    "storage_bucket": "thi-thu-1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:680503152707:android:cbdc4cb227265f4856c4f6",
+        "android_client_info": {
+          "package_name": "com.ph36461.thi_thu_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAC2PbnU5w2qEsSYU2Xlzhl-irNMteYcDM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
